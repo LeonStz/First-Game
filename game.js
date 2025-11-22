@@ -1,80 +1,56 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-// Gegner-Array (mehrere Gegner)
-const enemies = [];
-let enemyCount = 1;      // Start: nur 1 Gegner
-const maxEnemies = 7;    // maximal erlaubte Gegner
-
-function resizeGame() {
-  // Canvas an Fenster anpassen
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-
-  // Spieler neu skalieren und positionieren
-  player.width = canvas.width * 0.05;
-  player.height = canvas.width * 0.05;
-  player.x = canvas.width / 2 - player.width / 2;
-  player.y = canvas.height - player.height - 20;
-
-  // Gegner neu skalieren und neu verteilen
-  for (const enemy of enemies) {
-    enemy.width = canvas.width * 0.06;
-    enemy.height = canvas.width * 0.06;
-    enemy.x = Math.random() * (canvas.width - enemy.width);
-    enemy.y = -Math.random() * 400 - enemy.height;
-  }
-}
-
-// beim Start und bei Resize aufrufen
-window.addEventListener("resize", resizeGame);
-
+// Canvas fullscreen setzen
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
 // Spieler-Objekt
 const player = {
-  width: 50,
-  height: 50,
-  x: 0,
-  y: 0,
-  speed: 6,
+  width: canvas.width * 0.05,
+  height: canvas.width * 0.05,
+  x: canvas.width / 2 - (canvas.width * 0.05) / 2,
+  y: canvas.height - canvas.height * 0.1,
+  speed: 10,
   dx: 0,
 };
 
-// Anfangsgegner erzeugen
-for (let i = 0; i < enemyCount; i++) {
-  enemies.push(createEnemy(canvas.height * 0.004));
-}
+// Gegner-Array
+const enemies = [];
+let enemyCount = 1;
+const maxEnemies = 7;
 
-resizeGame();
-
-// Herzbild für Leben
+// Herzbild
 const heartImg = new Image();
 heartImg.src = "bilder/leben.png";
 
-// Gegnerbild
+// Gegner-Bild
 const enemyImg = new Image();
 enemyImg.src = "bilder/howl.png";
 
-
-// Score + Highscore + Leben
+// Score und Leben
 let score = 0;
 let highscore = localStorage.getItem("highscore") || 0;
 let lives = 3;
 
-// Spielzustand
+// Spielstatus
 let isStarted = false;
 let isPaused = false;
 let isGameOver = false;
 
-// Hilfsfunktion, um einen neuen Gegner zu erstellen
+// Gegner erzeugen
 function createEnemy(baseSpeed) {
   return {
     width: canvas.width * 0.06,
     height: canvas.width * 0.06,
     x: Math.random() * (canvas.width - canvas.width * 0.06),
-    y: -Math.random() * 400 - 50, // etwas zufällig versetzt spawnen
+    y: -Math.random() * 400 - 50,
     speed: baseSpeed,
   };
+}
+
+for (let i = 0; i < enemyCount; i++) {
+  enemies.push(createEnemy(4));
 }
 
 // Spieler zeichnen
@@ -83,154 +59,100 @@ function drawPlayer() {
   ctx.fillRect(player.x, player.y, player.width, player.height);
 }
 
-// alle Gegner zeichnen
+// Gegner zeichnen
 function drawEnemies() {
   for (const enemy of enemies) {
     ctx.drawImage(enemyImg, enemy.x, enemy.y, enemy.width, enemy.height);
   }
 }
 
-
-// Score + Highscore + Leben zeichnen
-function drawScore() {
-  ctx.fillStyle = "black";
-  ctx.font = "30px Arial";
-  ctx.textAlign = "left";
-
-  // Text zeichnen
-  const text = "Score: " + score + "  |  Highscore: " + highscore + "  | ";
-  ctx.fillText(text, 10, 30);
-
-  // Position ermitteln, an der der Text endet
-  const textWidth = ctx.measureText(text).width;
-
-  // Herzen direkt dahinter zeichnen
-  drawHearts(10 + textWidth, 10);
-}
-
-
-
+// Herzen zeichnen
 function drawHearts(startX, startY) {
-  const size = canvas.width * 0.03; // ca. 3% der Breite
+  const size = canvas.width * 0.03;
   for (let i = 0; i < lives; i++) {
     ctx.drawImage(heartImg, startX + i * (size + 5), startY, size, size);
   }
 }
 
+// Score zeichnen
+function drawScore() {
+  ctx.fillStyle = "black";
+  ctx.font = "30px Arial";
+  ctx.textAlign = "left";
+  const text = "Score: " + score + "  |  Highscore: " + highscore + "  | ";
+  ctx.fillText(text, 10, 30);
+  const widthText = ctx.measureText(text).width;
+  drawHearts(10 + widthText, 5);
+}
 
-
-
-// Startscreen zeichnen
+// Startscreen
 function drawStartScreen() {
-  ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+  ctx.fillStyle = "white";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   ctx.fillStyle = "black";
-  ctx.font = "28px Arial";
+  ctx.font = "40px Arial";
   ctx.textAlign = "center";
   ctx.fillText("Drück ENTER zum Starten", canvas.width / 2, canvas.height / 2);
-  ctx.font = "18px Arial";
-  ctx.fillText("Steuerung: A/D oder Pfeiltasten, P = Pause", canvas.width / 2, canvas.height / 2 + 40);
-  ctx.textAlign = "left";
 }
 
-// Game-Over-Screen zeichnen
-// Pausescreen zeichnen
+// Pausescreen
 function drawPauseScreen() {
-  ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+  ctx.fillStyle = "rgba(255,255,255,0.7)";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   ctx.fillStyle = "black";
-  ctx.font = "28px Arial";
+  ctx.font = "38px Arial";
   ctx.textAlign = "center";
   ctx.fillText("PAUSE", canvas.width / 2, canvas.height / 2);
-  ctx.font = "18px Arial";
-  ctx.fillText("Drück P zum Fortsetzen", canvas.width / 2, canvas.height / 2 + 40);
-  ctx.textAlign = "left";
 }
 
+// Game-Over-Screen
 function drawGameOverScreen() {
-  ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+  ctx.fillStyle = "rgba(255,255,255,0.9)";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   ctx.fillStyle = "black";
-  ctx.font = "28px Arial";
+  ctx.font = "40px Arial";
   ctx.textAlign = "center";
   ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2 - 20);
-
+  ctx.font = "28px Arial";
+  ctx.fillText("Score: " + score + "  |  Highscore: " + highscore, canvas.width / 2, canvas.height / 2 + 20);
   ctx.font = "20px Arial";
-  ctx.fillText(
-    "Score: " + score + "  |  Highscore: " + highscore,
-    canvas.width / 2,
-    canvas.height / 2 + 15
-  );
-
-  ctx.font = "18px Arial";
-  ctx.fillText(
-    "Drück ENTER für Neustart",
-    canvas.width / 2,
-    canvas.height / 2 + 50
-  );
-
-  ctx.textAlign = "left";
+  ctx.fillText("Drück ENTER zum Neustart", canvas.width / 2, canvas.height / 2 + 60);
 }
 
-
-// Canvas leeren
+// Canvas clear
 function clear() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
-function resetGame() {
-  score = 0;
-  lives = 3;
-  isGameOver = false;
-  isPaused = false;
-  isStarted = true; // direkt wieder ins Spiel, ohne Startscreen
-
-  // Spieler zurück in die Mitte
-  player.x = canvas.width / 2 - player.width / 2;
-  player.dx = 0;
-
-  // Gegner zurücksetzen
-  enemies.length = 0;
-  enemyCount = 1;
-  for (let i = 0; i < enemyCount; i++) {
-    enemies.push(createEnemy(2));
-  }
-}
-
-// einzelnen Gegner zurück nach oben setzen
+// Gegner resetten
 function resetEnemy(enemy) {
   enemy.x = Math.random() * (canvas.width - enemy.width);
   enemy.y = -Math.random() * 300 - enemy.height;
 }
 
-// Game Over behandeln
+// Game Over
 function gameOver() {
-  // Highscore aktualisieren
   if (score > highscore) {
     highscore = score;
     localStorage.setItem("highscore", highscore);
   }
-
   isGameOver = true;
-  isPaused = false;
-  player.dx = 0; // Bewegung stoppen
+  player.dx = 0;
 }
 
-// Spiellogik aktualisieren
+// Update
 function update() {
   clear();
 
-  // Startscreen anzeigen, solange nicht gestartet
   if (!isStarted) {
     drawStartScreen();
     requestAnimationFrame(update);
     return;
   }
 
-  // Wenn pausiert: aktuellen Stand zeigen + Pausescreen, aber nichts bewegen
   if (isPaused) {
     drawPlayer();
     drawEnemies();
@@ -240,7 +162,6 @@ function update() {
     return;
   }
 
-    // Wenn Game Over: alles anzeigen + Game-Over-Screen
   if (isGameOver) {
     drawPlayer();
     drawEnemies();
@@ -250,54 +171,40 @@ function update() {
     return;
   }
 
-
-  // Spieler bewegen
   player.x += player.dx;
 
-  // Begrenzungen
   if (player.x < 0) player.x = 0;
-  if (player.x + player.width > canvas.width) {
-    player.x = canvas.width - player.width;
-  }
+  if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
 
-  // alle Gegner updaten
   for (const enemy of enemies) {
     enemy.y += enemy.speed;
 
-    // Gegner unten raus -> Score +1, schneller machen, ggf. neuen Gegner hinzufügen
     if (enemy.y > canvas.height) {
       score++;
-      enemy.speed += 0.2;
+      enemy.speed += 0.3;
       resetEnemy(enemy);
 
-      // alle 5 Punkte einen neuen Gegner (bis maxEnemies)
       if (score % 5 === 0 && enemies.length < maxEnemies) {
-  enemies.push(createEnemy(canvas.height * (0.004 + enemies.length * 0.0005)));
-}
+        enemies.push(createEnemy(4 + enemies.length * 0.5));
+      }
     }
 
-
-        // Kollision mit diesem Gegner prüfen
     if (
       player.x < enemy.x + enemy.width &&
       player.x + player.width > enemy.x &&
       player.y < enemy.y + enemy.height &&
       player.y + player.height > enemy.y
     ) {
-      // Treffer -> Leben runter, Gegner resetten
       lives--;
       resetEnemy(enemy);
 
-      // keine Leben mehr -> Game Over
       if (lives <= 0) {
         gameOver();
-        // Schleife abbrechen, aber update() weiterlaufen lassen
         break;
       }
     }
   }
 
-  // zeichnen
   drawPlayer();
   drawEnemies();
   drawScore();
@@ -305,55 +212,39 @@ function update() {
   requestAnimationFrame(update);
 }
 
-// Tastatur-Eingaben (Pfeiltasten + WASD + ENTER + P)
+// Keyboard
 function keyDown(e) {
-    // Spiel starten oder nach Game Over neu starten
   if (e.key === "Enter") {
-    // Start vom Startscreen
     if (!isStarted && !isGameOver) {
       isStarted = true;
       return;
     }
-
-    // Neustart nach Game Over
     if (isGameOver) {
-      resetGame();
+      location.reload();
       return;
     }
   }
 
-
-  // Pause toggeln
   if (e.key === "p" || e.key === "P") {
-    if (isStarted && !isGameOver) {
+    if (isStarted) {
       isPaused = !isPaused;
-      if (isPaused) {
-        player.dx = 0; // Bewegung stoppen
-      }
+      player.dx = 0;
       return;
     }
   }
 
-  // Bewegung nur, wenn gestartet und nicht pausiert
   if (!isStarted || isPaused || isGameOver) return;
 
-  if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") {
-    player.dx = player.speed;
-  } else if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") {
-    player.dx = -player.speed;
-  }
+  if (e.key === "ArrowRight" || e.key === "d") player.dx = player.speed;
+  if (e.key === "ArrowLeft" || e.key === "a") player.dx = -player.speed;
 }
 
 function keyUp(e) {
-  if (!isStarted || isPaused) return;
-
   if (
     e.key === "ArrowRight" ||
     e.key === "ArrowLeft" ||
-    e.key === "a" ||
-    e.key === "A" ||
     e.key === "d" ||
-    e.key === "D"
+    e.key === "a"
   ) {
     player.dx = 0;
   }
@@ -362,27 +253,4 @@ function keyUp(e) {
 document.addEventListener("keydown", keyDown);
 document.addEventListener("keyup", keyUp);
 
-// --- Mobile Touch Controls ---
-const leftBtn = document.getElementById("leftBtn");
-const rightBtn = document.getElementById("rightBtn");
-
-leftBtn.addEventListener("touchstart", () => {
-  if (!isStarted || isPaused || isGameOver) return;
-  player.dx = -player.speed;
-});
-rightBtn.addEventListener("touchstart", () => {
-  if (!isStarted || isPaused || isGameOver) return;
-  player.dx = player.speed;
-});
-
-leftBtn.addEventListener("touchend", () => player.dx = 0);
-rightBtn.addEventListener("touchend", () => player.dx = 0);
-
-canvas.addEventListener("touchstart", () => {
-  if (!isStarted) {
-    isStarted = true;
-  }
-});
-
-// Spiel starten (Loop)
 update();
