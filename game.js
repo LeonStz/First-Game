@@ -362,5 +362,27 @@ function keyUp(e) {
 document.addEventListener("keydown", keyDown);
 document.addEventListener("keyup", keyUp);
 
+// --- Mobile Touch Controls ---
+const leftBtn = document.getElementById("leftBtn");
+const rightBtn = document.getElementById("rightBtn");
+
+leftBtn.addEventListener("touchstart", () => {
+  if (!isStarted || isPaused || isGameOver) return;
+  player.dx = -player.speed;
+});
+rightBtn.addEventListener("touchstart", () => {
+  if (!isStarted || isPaused || isGameOver) return;
+  player.dx = player.speed;
+});
+
+leftBtn.addEventListener("touchend", () => player.dx = 0);
+rightBtn.addEventListener("touchend", () => player.dx = 0);
+
+canvas.addEventListener("touchstart", () => {
+  if (!isStarted) {
+    isStarted = true;
+  }
+});
+
 // Spiel starten (Loop)
 update();
