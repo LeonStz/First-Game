@@ -7,11 +7,16 @@
 body {
   margin: 0;
   overflow: hidden;
-  background: #fff;
+  background: radial-gradient(circle at top, #f5f7ff 0%, #d5ddff 40%, #a3b4ff 100%);
 }
 
 canvas#game {
   display: block;
-  background: #fff;  /* oder transparenter Hintergrund */
+  background: linear-gradient(
+    to bottom,
+    #e4e9ff,
+    #c3cdee
+  );
 }
+
 
